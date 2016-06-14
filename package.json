@@ -1,0 +1,16 @@
+{
+  "name": "gallery.schaus.ca",
+  "config": {
+    "s3bucket": "gallery.schaus.ca"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "s3cmd sync --delete-removed src/ s3://$npm_package_config_s3bucket/",
+    "templates": "hulk templates/*.moustache -o src/templates_js/"
+  },
+  "author": "",
+  "license": "ISC"
+}

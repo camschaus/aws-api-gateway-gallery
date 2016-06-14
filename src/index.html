@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Schaus.CA - Gallery</title>
+				<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="css/gallery.css" />
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<script type="text/javascript" src="../components/jquery/dist/jquery.min.js"></script>
+		<script type="text/javascript" src="../components/hogan/web/builds/3.0.2/hogan-3.0.2.min.js"></script>
+		<script src="/templates_js/gallery.js"></script>
+		<script src="/templates_js/gallery-list.js"></script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+	</head>
+	<body>
+
+	<script>
+		var api = 'https://53ehrtx132.execute-api.us-west-2.amazonaws.com/Prod' + '/gallery'
+
+		var urlParam = function(name) {
+			var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+			if (results == null) {
+				return null;
+			}
+			return results[1] || 0;
+		}
+
+		var renderTemplate = function(template, data) {
+			var template = templates[template].render(data)
+			document.open()
+			document.write(template)
+			document.close()
+		}
+
+		var galleryName = urlParam('name')
+		
+		// if a gallery name was not supplied, list all galleries
+		if(!galleryName) {
+			$.getJSON(api, function(response) {
+				renderTemplate('gallery-list', response.data)
+			})	
+		} else {
+			$.getJSON(api + '/' + galleryName, function(data) {
+				renderTemplate('gallery', data)
+			})	
+		}
+		
+	</script>
+	</body>
+</html>

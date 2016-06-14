@@ -1,0 +1,5 @@
+*~
+/src/components
+.DS_Store
+/lambda/gallery/gallery.zip
+node_modules

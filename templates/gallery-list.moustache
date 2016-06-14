@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Galleries</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="css/gallery.css"> 
+		<style>
+		</style>
+	</head>
+	<body>
+		<h1>Galleries</h1>
+
+		<div id="gallery-list">
+            <ul>
+			{{#Items}}
+                <li><a href="?name={{name.S}}">{{nameFull.S}} - {{headerSub.S}}</a></li>
+			{{/Items}}
+            </ul>
+		</div>
+
+	</body>
+</html>

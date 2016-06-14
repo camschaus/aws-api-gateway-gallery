@@ -1,0 +1,43 @@
+			body {
+				font-family: "Roboto", Helvetica, sans-serif;
+			}
+
+			h1 {
+				font-size: 125%;
+			}
+
+			figure[itemprop="associatedMedia"] img[itemprop="thumbnail"] {
+				max-width: 100%;
+ 				-webkit-border-radius: 5px;
+ 				-moz-border-radius: 5px;
+ 				border-radius: 5px;
+			}
+
+			figure[itemprop="associatedMedia"] {
+				float: left;
+				width: 16%;
+ 				margin:  2% 2% 2% 2%; 			
+ 			}
+
+ 			@media only screen and (max-width : 940px),
+			only screen and (max-device-width : 940px){
+ 				figure[itemprop="associatedMedia"] {width: 21%;}
+			}
+ 
+			@media only screen and (max-width : 720px),
+			only screen and (max-device-width : 720px){
+ 				figure[itemprop="associatedMedia"] {width: 29.33333%;}
+			}
+ 
+			@media only screen and (max-width : 530px),
+			only screen and (max-device-width : 530px){
+ 				figure[itemprop="associatedMedia"] {width: 46%;}
+			}
+ 
+			@media only screen and (max-width : 320px),
+			only screen and (max-device-width : 320px){
+ 				figure[itemprop="associatedMedia"] {width: 96%;}
+ 				figure[itemprop="associatedMedia"] img[itemprop="thumbnail"] {width: 96%;}
+ 				figure[itemprop="associatedMedia"] h3 {font-size: 18px;}
+ 				figure[itemprop="associatedMedia"] p, {font-size: 18px;}
+			}

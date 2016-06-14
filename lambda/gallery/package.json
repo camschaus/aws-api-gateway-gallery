@@ -1,0 +1,23 @@
+{
+  "name": "gallery",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "config": {
+    "zip": "gallery.zip",
+    "LambdaCodeBucket": "zz-lambda-code",
+    "LambdaFunctionName": "cds-gallery-api-1-galleryHandler-8UPW3QTQI829"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "zip -r $npm_package_config_zip node_modules gallery.js index.js properties.json",
+    "deploys3": "aws s3 cp $npm_package_config_zip s3://$npm_package_config_LambdaCodeBucket/",
+    "updatefn": "aws lambda update-function-code --function-name $npm_package_config_LambdaFunctionName --zip-file fileb://$npm_package_config_zip"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.3.19",
+    "bluebird": "^3.4.0"
+  }
+}

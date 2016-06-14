@@ -1,0 +1,311 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Photo Gallery - API",
+  "Parameters": {
+    "domain": {
+      "Description": "domain name suffix",
+      "Type": "String",
+      "Default": "schaus.ca"
+    },
+    "galleryName": {
+      "Type": "String",
+      "Description": "gallery domain prefix",
+      "Default": "gallery"
+    },
+    "galleryRESTRoute": {
+      "Type": "String",
+      "Description": "gallery REST route",
+      "Default": "gallery"
+    },
+    "adminRESTRoute": {
+      "Type": "String",
+      "Description": "gallery admin REST route",
+      "Default": "admin"
+    },
+    "lambdaCodeBucket": {
+      "Type": "String",
+      "Description": "Lambda S3 code bucket",
+      "Default": "zz-lambda-code"
+    },
+    "galleryHandlerFilename": {
+      "Type": "String",
+      "Description": "galleryHandler Lambda release zip filename",
+      "Default": "gallery.zip"
+    }
+  },
+  "Resources": {
+    "CloudWatchRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": [ "apigateway.amazonaws.com" ] },
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "Path": "/",
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"]
+      }
+    },
+    "Account": {
+      "Type": "AWS::ApiGateway::Account",
+      "Properties": {
+        "CloudWatchRoleArn": { "Fn::GetAtt": ["CloudWatchRole", "Arn"] }
+      }
+    },
+    "galleryHandler": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": "galleryHandlerRole",
+      "Properties": {
+        "MemorySize": 128,
+        "Code": {
+          "S3Bucket": {
+            "Ref": "lambdaCodeBucket"
+          },
+          "S3Key": {
+            "Ref": "galleryHandlerFilename"
+          }
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "galleryHandlerRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 60,
+        "Runtime": "nodejs4.3",
+        "Description": "gallery get handler"
+      }
+    },
+    "galleryHandlerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Action": [
+              "sts:AssumeRole"
+            ]
+          }]
+        },
+        "Policies": [{
+          "PolicyName": "logs",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                 "logs:*"
+              ],
+              "Resource": "arn:aws:logs:*:*:*"
+            }]
+          }
+        },
+        {
+          "PolicyName": "dynamoDB",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:*"
+              ],
+              "Resource": [ 
+                {
+                  "Fn::Join": ["", [
+                    "arn:aws:dynamodb:",
+                    { "Ref": "AWS::Region" },
+                    ":",
+                    { "Ref": "AWS::AccountId" },
+                    ":table/",
+                    { "Ref": "galleryDynamoDB" }
+                  ]]
+                }
+              ]
+            }]
+          }
+        }]
+      }
+    },
+    "restApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Description": "gallery API",
+        "Name": { "Ref": "galleryName" }
+      }
+    },
+    "restRoot": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": { "Ref": "restApi" },
+        "ParentId": { "Fn::GetAtt": ["restApi", "RootResourceId"] },
+        "PathPart": { "Ref": "galleryRESTRoute" }
+      }
+    },
+    "restGallery": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": { "Ref": "restApi" },
+        "ParentId": { "Ref": "restRoot" },
+        "PathPart": "{name}"
+      }
+    },
+    "restRootGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": { "Ref": "restApi" },
+        "ResourceId": { "Ref": "restRoot" },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "ApiKeyRequired": false,
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters" : {
+              "method.response.header.Access-Control-Allow-Headers" : true,
+              "method.response.header.Access-Control-Allow-Methods" : true,
+              "method.response.header.Access-Control-Allow-Origin" : true
+            }
+          },
+          {
+            "StatusCode": "404"
+          },
+          {
+            "StatusCode": "500"
+          }
+        ],
+        "Integration": { 
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS",
+          "Uri": { "Fn::Join": [ "", [ "arn:aws:apigateway:", { "Ref" : "AWS::Region" }, ":lambda:path/2015-03-31/functions/", { "Fn::GetAtt": [ "galleryHandler", "Arn" ] }, "/invocations" ] ] },
+          "RequestTemplates": {
+            "application/json": "{\n    \"statusCode\": \"200\",\n    \"function\": \"galleriesGet\"\n}"
+          },
+          "IntegrationResponses": [
+            {
+              "SelectionPattern" : "NotFound",
+              "StatusCode" : "404"
+            },
+            {
+              "SelectionPattern" : "InternalError",
+              "StatusCode" : "500"
+            },
+            {
+              "StatusCode" : "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers" : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'",
+                "method.response.header.Access-Control-Allow-Methods" : "'*'",
+                "method.response.header.Access-Control-Allow-Origin" : "'*'"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "restGalleryGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": { "Ref": "restApi" },
+        "ResourceId": { "Ref": "restGallery" },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "ApiKeyRequired": false,
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters" : {
+              "method.response.header.Access-Control-Allow-Headers" : true,
+              "method.response.header.Access-Control-Allow-Methods" : true,
+              "method.response.header.Access-Control-Allow-Origin" : true
+            }
+          },
+          {
+            "StatusCode": "404"
+          },
+          {
+            "StatusCode": "500"
+          }
+        ],
+        "Integration": { 
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS",
+          "Uri": { "Fn::Join": [ "", [ "arn:aws:apigateway:", { "Ref" : "AWS::Region" }, ":lambda:path/2015-03-31/functions/", { "Fn::GetAtt": [ "galleryHandler", "Arn" ] }, "/invocations" ] ] },
+          "RequestTemplates": {
+            "application/json": "{\n    \"statusCode\": \"200\",\n    \"function\": \"galleryGet\", \"parameters\": {\"name\": \"$input.params('name')\"}\n}"
+          },
+          "IntegrationResponses": [
+            {
+              "SelectionPattern" : "NotFound",
+              "StatusCode" : "404"
+            },
+            {
+              "SelectionPattern" : "InternalError",
+              "StatusCode" : "500"
+            },
+            {
+              "StatusCode" : "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers" : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'",
+                "method.response.header.Access-Control-Allow-Methods" : "'*'",
+                "method.response.header.Access-Control-Allow-Origin" : "'*'"
+              }
+            }
+          ]
+        }
+      }
+    }, 
+    "galleryDeploymentProd": {
+      "Type" : "AWS::ApiGateway::Deployment",
+      "DependsOn": [ "restRootGet", "restGalleryGet" ],
+      "Properties" : {
+        "Description" : "gallery PROD deployment",
+        "RestApiId" : { "Ref": "restApi" },
+        "StageDescription" : {
+          "Description" : "Gallery PROD deployment",
+          "StageName" : "Prod"
+        },
+        "StageName" : "Prod"
+      }
+    },
+    "galleryHandlerPermission": {
+      "Type" : "AWS::Lambda::Permission",
+      "Properties" : {
+        "Action" : "lambda:InvokeFunction",
+        "FunctionName" : { "Ref": "galleryHandler" },
+        "Principal" : "apigateway.amazonaws.com",
+        "SourceArn" : {"Fn::Join": ["", ["arn:aws:execute-api:", {"Ref": "AWS::Region"}, ":", {"Ref": "AWS::AccountId"}, ":", {"Ref": "restApi"}, "/*"]]}
+      }
+    },
+    "galleryDynamoDB" : {
+      "Type" : "AWS::DynamoDB::Table",
+      "Properties" : {
+        "AttributeDefinitions" : [
+          {
+            "AttributeName" : "name",
+            "AttributeType" : "S"   
+          }
+        ],
+        "KeySchema" : [
+          {
+            "AttributeName" : "name",
+            "KeyType" : "HASH"
+          }
+        ],
+        "ProvisionedThroughput" : {
+          "ReadCapacityUnits" : "2",
+          "WriteCapacityUnits" : "1"
+        },
+        "TableName" : { "Fn::Join" : [ "", [ { "Ref": "galleryName" }, ".", { "Ref": "domain" }, "-gallery" ] ] }
+      }
+    }
+  },
+  "Outputs": {
+  }
+}

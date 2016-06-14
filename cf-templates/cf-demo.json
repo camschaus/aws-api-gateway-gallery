@@ -1,0 +1,43 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Demo Cloud Formation",
+  
+  "Resources": {
+    "webrootS3": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "www.mycoolsite.com",
+        "WebsiteConfiguration": {
+          "IndexDocument" : "index.html",
+          "ErrorDocument" : "error.html"
+        }
+      }
+    },
+    "webrootS3Policy": {
+      "Type" : "AWS::S3::BucketPolicy",
+      "DeletionPolicy" : "Retain",
+      "DependsOn": "webrootS3",
+      "Properties" : {
+        "Bucket" : {"Ref" : "webrootS3"},
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Sid": "AddPerm",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "s3:GetObject",
+              "Resource": "arn:aws:s3:::www.mycoolsite.com/*"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "webrootS3": {
+      "Value": {
+        "Ref": "webrootS3"
+      }
+    }
+  }
+}
