@@ -10,7 +10,9 @@ Follow these steps to deploy this sample application:
 
 1. create a lambda code bucket and update lambda/gallery/package.json with bucket name
 
+```bash
     aws s3 s3://lambda-code-bucket-name
+```
 
 1. Build and deploy the lambda function
 
