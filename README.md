@@ -14,7 +14,7 @@ Follow these steps to deploy this sample application:
 
     **aws s3 s3://lambda-code-bucket-name**
 
-1. Build and deploy the lambda function
+1. Update lambda/gallery/properties.json, changing the name of the dynamoDB table to match your domain.  Build and deploy the lambda function
 
     **(cd lambda/gallery; npm install && npm run-script package && npm run-script deploys3)**
 
