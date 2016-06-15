@@ -22,11 +22,11 @@ Follow these steps to deploy this sample application:
 
 1. Create the static web components
 
-    **aws cloudformation create-stack --stack-name cds-gallery-1 --template-body file://cf-templates/gallery-static.json --capabilities CAPABILITY_IAM**
+    **aws cloudformation create-stack --stack-name gallery-1 --template-body file://cf-templates/gallery-static.json --capabilities CAPABILITY_IAM**
     
 1. Create the API components
 
-    **aws cloudformation create-stack --stack-name cds-gallery-api-1 --template-body file://cf-templates/gallery-api.json --capabilities CAPABILITY_IAM**
+    **aws cloudformation create-stack --stack-name gallery-api-1 --template-body file://cf-templates/gallery-api.json --capabilities CAPABILITY_IAM**
     
 1. Find the API Gateway URL.  From the AWS Console, go to API Gateway -> Gallery API -> Stages -> Prod and copy the URL.  Edit src/index.html and update the *api* variable with this value.
 
