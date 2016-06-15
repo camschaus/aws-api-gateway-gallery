@@ -32,9 +32,9 @@ Follow these steps to deploy this sample application:
 
 1. build and deploy the static web content
 
-    **npm install -g bower**
-    **bower install**
-    **npm run-script deploy**
+    **npm install -g bower
+    bower install
+    npm run-script deploy**
     
 1. Seed the DynamoDB table
 
