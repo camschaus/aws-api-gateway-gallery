@@ -35,7 +35,7 @@ Follow these steps to deploy this sample application:
     npm install -g bower
     bower install
     npm run-script deploy**
-    
+
 1. Seed the DynamoDB table
 
     **(cd util; npm install && node addGallery.js)**
